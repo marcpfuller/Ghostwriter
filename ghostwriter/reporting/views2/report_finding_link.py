@@ -1,6 +1,7 @@
 
 import logging
 import json
+from http import HTTPStatus
 from socket import gaierror
 
 from django.http import HttpResponseRedirect, JsonResponse
@@ -67,7 +68,7 @@ class AssignFinding(RoleBasedAccessControlMixin, SingleObjectMixin, View):
             return JsonResponse({
                 "result": "error",
                 "message": "Please select a report to edit in the sidebar or go to a report's dashboard to assign an finding."
-            }, status=400)
+            }, status=HTTPStatus.BAD_REQUEST)
 
         if not ReportFindingLink.user_can_create(self.request.user, report):
             return ForbiddenJsonResponse()
@@ -277,7 +278,7 @@ def ajax_update_report_findings(request):
     attached to an individual :model:`reporting.Report`.
     """
     if request.method != "POST":
-        return JsonResponse({"result": "error"}, status=405)
+        return JsonResponse({"result": "error"}, status=HTTPStatus.METHOD_NOT_ALLOWED)
 
     pos = request.POST.get("positions")
     report_id = request.POST.get("report")

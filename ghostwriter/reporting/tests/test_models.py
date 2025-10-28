@@ -3,6 +3,7 @@ from datetime import timedelta
 import logging
 import os
 import json
+from http import HTTPStatus
 
 # 3rd Party Libraries
 import factory
@@ -837,7 +838,7 @@ class EmptyFieldFilteringReportExportTests(TestCase):
         response = client.get(json_export_url)
 
         # Verify the export succeeded
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response['Content-Type'], 'application/json')
 
         # Parse the exported JSON (this is the ReportDataSerializer output)
@@ -931,7 +932,7 @@ class EmptyFieldFilteringReportExportTests(TestCase):
         # Template logic simulation
         def jinja_check(value):
             return bool(value)  # {% if value %} logic
-        
+
         # These should be False but will be True, demonstrating the bug
         self.assertFalse(jinja_check(finding_data['description']),
             "Direct ReportDataSerializer export includes <p></p> content incorrectly")

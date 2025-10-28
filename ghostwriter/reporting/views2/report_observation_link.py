@@ -1,6 +1,7 @@
 
 import json
 import logging
+from http import HTTPStatus
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -75,7 +76,7 @@ class AssignObservation(RoleBasedAccessControlMixin, SingleObjectMixin, View):
             return JsonResponse({
                 "result": "error",
                 "message": "Please select a report to edit in the sidebar or go to a report's dashboard to assign an observation."
-            }, status=400)
+            }, status=HTTPStatus.BAD_REQUEST)
 
         if not report.user_can_edit(self.request.user):
             return ForbiddenJsonResponse()

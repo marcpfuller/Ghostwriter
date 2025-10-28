@@ -3,6 +3,7 @@
 # Standard Libraries
 import json
 import logging.config
+from http import HTTPStatus
 from datetime import date, datetime
 
 # Django Imports
@@ -109,10 +110,10 @@ class AjaxLoadProjects(RoleBasedAccessControlMixin, View):
                         .defer("extra_fields")
                     )
                     return render(request, "shepherd/project_dropdown_list.html", {"projects": projects})
-                return HttpResponse(status=403)
+                return HttpResponse(status=HTTPStatus.FORBIDDEN)
             except ValueError:
                 logger.error("Received bad primary key value for client: %s", client_id)
-        return HttpResponse(status=400)
+        return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
 
 class AjaxLoadProject(RoleBasedAccessControlMixin, View):
@@ -137,7 +138,7 @@ class AjaxLoadProject(RoleBasedAccessControlMixin, View):
                 return ForbiddenJsonResponse()
             except (Project.DoesNotExist, ValueError):
                 logger.error("Received bad primary key value for project: %s", project_id)
-        return JsonResponse({"error": "Bad request"}, status=400)
+        return JsonResponse({"error": "Bad request"}, status=HTTPStatus.BAD_REQUEST)
 
 
 class AjaxDomainOverwatch(RoleBasedAccessControlMixin, View):
@@ -170,7 +171,7 @@ class AjaxDomainOverwatch(RoleBasedAccessControlMixin, View):
             except (Client.DoesNotExist, ValueError):
                 logger.error("Received bad primary key values for client and domain: %s and %s", client_id, domain_id)
 
-        return JsonResponse({"result": "error", "message": "Bad request"}, status=400)
+        return JsonResponse({"result": "error", "message": "Bad request"}, status=HTTPStatus.BAD_REQUEST)
 
 
 class AjaxUpdateDomainBadges(RoleBasedAccessControlMixin, SingleObjectMixin, View):

@@ -2,7 +2,7 @@
 
 # Standard Libraries
 import logging
-
+from http import HTTPStatus
 # Django Imports
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
@@ -85,6 +85,6 @@ class HealthCheckCustomView(MainView):
                 return self.render_to_response_json(self.plugins, status_code)
         return HttpResponse(
             "Not Acceptable: Supported content types: text/html, application/json",
-            status=406,
+            status=HTTPStatus.NOT_ACCEPTABLE,
             content_type="text/plain",
         )  # pragma: no cover

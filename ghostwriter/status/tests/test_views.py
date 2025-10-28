@@ -1,5 +1,6 @@
 # Standard Libraries
 import logging
+from http import HTTPStatus
 
 # Django Imports
 from django.test import Client, TestCase, tag
@@ -22,27 +23,27 @@ class HealthCheckCustomViewTests(TestCase):  # pragma: no cover
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200, response.context)
+        self.assertEqual(response.status_code, HTTPStatus.OK, response.context)
 
     def test_view_uses_correct_template(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "health_check.html")
 
     def test_format_options(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client.get(f"{self.uri}?format=json")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(response["content-type"], "application/json")
 
         response = self.client.get(self.uri, HTTP_ACCEPT="application/json")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(response["content-type"], "application/json")
 
         response = self.client.get(self.uri, HTTP_ACCEPT="text/html")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(response["content-type"], "text/html")
 
 
@@ -59,5 +60,5 @@ class HealthCheckSimpleViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn(b"OK", response.content)

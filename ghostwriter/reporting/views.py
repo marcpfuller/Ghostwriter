@@ -4,6 +4,7 @@
 import logging
 import os
 from datetime import datetime
+from http import HTTPStatus
 from os.path import exists
 
 # Django Imports
@@ -751,7 +752,7 @@ class EvidenceCreate(RoleBasedAccessControlMixin, CreateView):
     def form_invalid(self, form: EvidenceForm):
         if self.request.accepts("text/html") or not self.request.accepts("application/json"):
             return super().form_invalid(form)
-        return JsonResponse(form.errors, status=400, safe=True)
+        return JsonResponse(form.errors, status=HTTPStatus.BAD_REQUEST, safe=True)
 
 
     def get_success_url(self):

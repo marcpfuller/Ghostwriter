@@ -1,6 +1,7 @@
 # Standard Libraries
 import logging
 from datetime import date, datetime, timedelta
+from http import HTTPStatus
 
 # Django Imports
 from django.test import Client, TestCase
@@ -60,7 +61,7 @@ class IndexViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to :model:`shepherd.Domain`
@@ -85,15 +86,15 @@ class UpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/update.html")
 
     def test_custom_context_exists(self):
@@ -125,7 +126,7 @@ class UpdateViewTests(TestCase):
         self.vt_config.sleep_time = 0
         self.vt_config.save()
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_with_post_request(self):
         response = self.client_auth.post(self.uri)
@@ -162,17 +163,17 @@ class DomainOverwatchViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         parameters = {"client": self.client_org.pk, "domain": self.domain.pk}
         response = self.client_auth.get(self.uri, parameters)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_overwatch_warning_positive(self):
         parameters = {"client": self.client_org.pk, "domain": self.domain.pk}
         response = self.client_mgr.get(self.uri, parameters)
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         data = {
             "result": "warning",
             "message": "Domain has been used with this client in the past!",
@@ -182,14 +183,14 @@ class DomainOverwatchViewTests(TestCase):
     def test_overwatch_warning_negative(self):
         parameters = {"client": self.client_org.pk, "domain": self.unused_domain.pk}
         response = self.client_mgr.get(self.uri, parameters)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         data = {"result": "success", "message": ""}
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_missing_values(self):
         parameters = {"domain": self.unused_domain.pk}
         response = self.client_mgr.get(self.uri, parameters)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         data = {"result": "error", "message": "Bad request"}
         self.assertJSONEqual(force_str(response.content), data)
 
@@ -230,15 +231,15 @@ class DomainListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/domain_list.html")
 
     def test_custom_context_exists(self):
@@ -249,25 +250,25 @@ class DomainListViewTests(TestCase):
     def test_domain_filtering(self):
         # Filter defaults to only showing available domains (id 1), so we should only see 3
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 3)
 
         # Filter defaults to filtering out expired domains, so we should only see 4
         response = self.client_auth.get(f"{self.uri}?domain=")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 5)
 
         # With a filter provided, the filter won't add an exclusion for status, so we should see 4
         response = self.client_auth.get(f"{self.uri}?exclude_expired=on")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 4)
 
         response = self.client_auth.get(f"{self.uri}?domain=spec")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 2)
 
         response = self.client_auth.get(f"{self.uri}?domain=mal")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
 
@@ -289,15 +290,15 @@ class DomainDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/domain_detail.html")
 
 
@@ -317,15 +318,15 @@ class DomainCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/domain_form.html")
 
     def test_custom_context_exists(self):
@@ -351,15 +352,15 @@ class DomainUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/domain_form.html")
 
     def test_custom_context_exists(self):
@@ -389,15 +390,15 @@ class DomainDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -430,15 +431,15 @@ class BurnViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/burn.html")
 
     def test_custom_context_exists(self):
@@ -476,12 +477,12 @@ class DomainExportViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.get("Content-Type"), "text/csv")
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to :model:`shepherd.History`
@@ -507,24 +508,24 @@ class HistoryCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["client"].queryset), 0)
 
         ClientInviteFactory(client=self.test_client, user=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["client"].queryset), 1)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/checkout.html")
 
     def test_custom_context_exists(self):
@@ -559,22 +560,22 @@ class HistoryUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.entry.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/checkout.html")
 
     def test_custom_context_exists(self):
@@ -608,22 +609,22 @@ class HistoryDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.entry.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -683,7 +684,7 @@ class DomainReleaseViewTests(TestCase):
         self.domain.refresh_from_db()
         self.checkout.refresh_from_db()
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         data = {"result": "success", "message": "Domain successfully released."}
         self.assertJSONEqual(force_str(response.content), data)
         self.assertEqual(self.domain.domain_status, self.available_status)
@@ -691,11 +692,11 @@ class DomainReleaseViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_domain_release_failure(self):
         response = self.client_auth.post(self.failure_uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         data = {
             "result": "error",
             "message": "You do not have permission to release this domain.",
@@ -735,15 +736,15 @@ class ServerListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/server_list.html")
 
     def test_custom_context_exists(self):
@@ -754,27 +755,27 @@ class ServerListViewTests(TestCase):
     def test_server_filtering(self):
         # Filter defaults to only showing available servers (id 1), so we should only see 2
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 2)
 
         # With a filter provided, the filter won't add an exclusion for status, so we should see three 3
         response = self.client_auth.get(f"{self.uri}?server=")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client_auth.get(f"{self.uri}?server=10")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 2)
 
         response = self.client_auth.get(f"{self.uri}?server=ghost")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
         response = self.client_auth.get(f"{self.uri}?server=200")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
         response = self.client_auth.get(f"{self.uri}?server_status=2")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
 
@@ -796,15 +797,15 @@ class ServerDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/server_detail.html")
 
 
@@ -824,15 +825,15 @@ class ServerCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/server_form.html")
 
     def test_custom_context_exists(self):
@@ -859,15 +860,15 @@ class ServerUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/server_form.html")
 
     def test_custom_context_exists(self):
@@ -897,15 +898,15 @@ class ServerDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -942,12 +943,12 @@ class ServerExportViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.get("Content-Type"), "text/csv")
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to :model:`shepherd.ServerHistory`
@@ -973,24 +974,24 @@ class ServerHistoryCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["client"].queryset), 0)
 
         ClientInviteFactory(client=self.test_client, user=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["client"].queryset), 1)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/server_checkout.html")
 
     def test_custom_context_exists(self):
@@ -1023,22 +1024,22 @@ class ServerHistoryUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.entry.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/server_checkout.html")
 
     def test_custom_context_exists(self):
@@ -1069,22 +1070,22 @@ class ServerHistoryDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.entry.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -1146,7 +1147,7 @@ class ServerReleaseViewTests(TestCase):
         self.server.refresh_from_db()
         self.checkout.refresh_from_db()
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         data = {"result": "success", "message": "Server successfully released."}
         self.assertJSONEqual(force_str(response.content), data)
         self.assertEqual(self.server.server_status, self.available_status)
@@ -1154,11 +1155,11 @@ class ServerReleaseViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_server_release_failure(self):
         response = self.client_auth.post(self.failure_uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         data = {
             "result": "error",
             "message": "You do not have permission to release this server.",
@@ -1191,22 +1192,22 @@ class TransientServerCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/vps_form.html")
 
     def test_custom_context_exists(self):
@@ -1263,7 +1264,7 @@ class TransientServerCreateViewTests(TestCase):
         response = self.client_mgr.post(self.uri, data.data)
         messages = list(get_messages(response.wsgi_request))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_uri)
         self.assertEqual(len(messages), 2)
         self.assertTrue(any(
@@ -1279,7 +1280,7 @@ class TransientServerCreateViewTests(TestCase):
         response = self.client_mgr.post(self.uri, data.data)
         messages = list(get_messages(response.wsgi_request))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_uri)
         self.assertEqual(len(messages), 2)
         # The total is now 4 because the cloud server shares an IP with the static server, the original VPS, and the previous test VPS
@@ -1306,22 +1307,22 @@ class TransientServerUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.server.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/vps_form.html")
 
     def test_custom_context_exists(self):
@@ -1353,21 +1354,21 @@ class TransientServerDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(self.TransientServer.objects.all().exists())
         data = {"result": "success", "message": "VPS successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(operator=self.user, project=self.server.project)
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 # Tests related to :model:`shepherd.DomainServerConnection`
@@ -1392,22 +1393,22 @@ class DomainServerConnectionCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/connect_form.html")
 
     def test_custom_context_exists(self):
@@ -1438,22 +1439,22 @@ class DomainServerConnectionUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.entry.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/connect_form.html")
 
     def test_custom_context_exists(self):
@@ -1485,21 +1486,21 @@ class DomainServerConnectionDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(self.DomainServerConnection.objects.all().exists())
         data = {"result": "success", "message": "Link successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(operator=self.user, project=self.entry.project)
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 # Tests related to multi-model views
@@ -1537,15 +1538,15 @@ class UserAssetsViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "shepherd/checkouts_for_user.html")
 
     def test_custom_context_exists(self):
@@ -1588,17 +1589,17 @@ class InfrastructureSearchViewTests(TestCase):
     def test_view_uri_exists_at_desired_location(self):
         post_data = {"query": "192.168.1.1"}
         response = self.client_auth.get(self.uri, post_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         post_data = {"query": "192.168.1.1"}
         response = self.client.get(self.uri, post_data)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_custom_context_exists(self):
         post_data = {"query": "192.168"}
         response = self.client_auth.get(self.uri, post_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertIn("servers", response.context)
         self.assertIn("vps", response.context)
@@ -1613,7 +1614,7 @@ class InfrastructureSearchViewTests(TestCase):
     def test_custom_context_with_few_results(self):
         post_data = {"query": "192.168.2"}
         response = self.client_auth.get(self.uri, post_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertIn("servers", response.context)
         self.assertIn("vps", response.context)
@@ -1627,12 +1628,12 @@ class InfrastructureSearchViewTests(TestCase):
 
     def test_blank_search(self):
         response = self.client_auth.get(self.uri + "?query=")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_search_with_zero_results(self):
         post_data = {"query": "1.1.1.1"}
         response = self.client_auth.get(self.uri, post_data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertIn("servers", response.context)
         self.assertIn("vps", response.context)
@@ -1661,11 +1662,11 @@ class UpdateDomainBadgesViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class UpdateServerBadgesViewTests(TestCase):
@@ -1684,11 +1685,11 @@ class UpdateServerBadgesViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class LoadProjectsViewTests(TestCase):
@@ -1710,22 +1711,22 @@ class LoadProjectsViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ClientInviteFactory(client=self.org, user=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_bad_parameters(self):
         response = self.client_mgr.get(f"{self.uri}foo")
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
 
 class LoadProjectViewTests(TestCase):
@@ -1747,18 +1748,18 @@ class LoadProjectViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(project=self.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_project_data_access(self):
         response = self.client_mgr.get(self.uri)
@@ -1767,7 +1768,7 @@ class LoadProjectViewTests(TestCase):
 
     def test_bad_parameters(self):
         response = self.client_mgr.get(f"{self.uri}foo")
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
 
 class DomainNoteUpdateTests(TestCase):
@@ -1790,15 +1791,15 @@ class DomainNoteUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.other_user_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class DomainNoteDeleteTests(TestCase):
@@ -1823,7 +1824,7 @@ class DomainNoteDeleteTests(TestCase):
         self.assertEqual(len(self.DomainNote.objects.all()), 1)
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Note successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -1835,14 +1836,14 @@ class DomainNoteDeleteTests(TestCase):
         uri = reverse("shepherd:ajax_delete_domain_note", kwargs={"pk": note.pk})
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         note = DomainNoteFactory()
         uri = reverse("shepherd:ajax_delete_domain_note", kwargs={"pk": note.pk})
 
         response = self.client.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ServerNoteUpdateTests(TestCase):
@@ -1865,15 +1866,15 @@ class ServerNoteUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.other_user_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ServerNoteDeleteTests(TestCase):
@@ -1898,7 +1899,7 @@ class ServerNoteDeleteTests(TestCase):
         self.assertEqual(len(self.ServerNote.objects.all()), 1)
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Note successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -1910,11 +1911,11 @@ class ServerNoteDeleteTests(TestCase):
         uri = reverse("shepherd:ajax_delete_server_note", kwargs={"pk": note.pk})
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         note = ServerNoteFactory()
         uri = reverse("shepherd:ajax_delete_server_note", kwargs={"pk": note.pk})
 
         response = self.client.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

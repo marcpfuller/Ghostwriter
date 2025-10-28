@@ -5,6 +5,7 @@ import collections
 import csv
 import json
 import logging
+from http import HTTPStatus
 
 # Django Imports
 from django.contrib import messages
@@ -73,7 +74,7 @@ class OplogMuteToggle(RoleBasedAccessControlMixin, SingleObjectMixin, View):
 
     def handle_no_permission(self):
         data = {"result": "error", "message": "Only a manager or admin can mute notifications."}
-        return JsonResponse(data, status=403)
+        return JsonResponse(data, status=HTTPStatus.FORBIDDEN)
 
     def post(self, *args, **kwargs):
         obj = self.get_object()
@@ -137,7 +138,7 @@ class OplogSanitize(RoleBasedAccessControlMixin, SingleObjectMixin, View):
 
     def handle_no_permission(self):
         data = {"result": "error", "message": "Only a manager or admin can choose to sanitize a log."}
-        return JsonResponse(data, status=403)
+        return JsonResponse(data, status=HTTPStatus.FORBIDDEN)
 
     def post(self, *args, **kwargs):
         obj = self.get_object()

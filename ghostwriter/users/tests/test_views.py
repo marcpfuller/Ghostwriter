@@ -2,6 +2,7 @@
 import logging
 import os
 from base64 import b64decode
+from http import HTTPStatus
 from io import BytesIO
 
 # Django Imports
@@ -36,15 +37,15 @@ class UserDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "users/profile.html")
 
 
@@ -69,20 +70,20 @@ class UserUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "users/profile_form.html")
 
     def test_view_blocks_improper_access(self):
         response = self.other_client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_successful_redirect(self):
         response = self.client_auth.post(
@@ -125,20 +126,20 @@ class UserProfileUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "users/profile_form.html")
 
     def test_view_blocks_improper_access(self):
         response = self.other_client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_successfull_redirect(self):
         response = self.client_auth.post(self.uri, {"avatar": self.uploaded_image_file})
@@ -166,7 +167,7 @@ class UserRedirectViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class GhostwriterPasswordChangeViewTests(TestCase):
@@ -186,11 +187,11 @@ class GhostwriterPasswordChangeViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_successfull_redirect(self):
         response = self.client_auth.post(
@@ -218,25 +219,25 @@ class UserLoginViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_redirects_if_authenticated(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "account/login.html")
 
     def test_valid_credentials(self):
         response = self.client.post(self.uri, {"login": self.user.username, "password": PASSWORD})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertTemplateUsed(response, "account/messages/logged_in.txt")
 
     def test_invalid_credentials(self):
         response = self.client.post(self.uri, {"login": self.user.username, "password": "invalid"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "account/login.html")
 
 
@@ -260,23 +261,23 @@ class RequireMFAMiddlewareTests(TestCase):
 
     def test_mfa_required(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.user.require_mfa = True
         self.user.save()
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.setup_uri, fetch_redirect_response=False, target_status_code=302)
 
         response = self.client_auth.get(self.setup_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         response = self.client_auth.get(self.change_pwd_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.client_auth.get(self.reset_pwd_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.client_auth.get(self.logout_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.user.require_mfa = False
         self.user.save()
@@ -319,41 +320,41 @@ class AvatarDownloadTest(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEquals(response.get("Content-Disposition"), 'attachment; filename="default_avatar.png"')
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_non_existent_user(self):
         response = self.client_auth.get(self.missing_user_uri)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_username_with_period(self):
         response = self.client_auth.get(self.period_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_returns_correct_image(self):
         self.user_profile.avatar = self.uploaded_image_file
         self.user_profile.save()
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertRegexpMatches(response.get("Content-Disposition"), r'^attachment; filename="fake[_0-9a-zA-Z]*\.png"$')
 
         if os.path.exists(self.user_profile.avatar.path):
             os.remove(self.user_profile.avatar.path)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEquals(response.get("Content-Disposition"), 'attachment; filename="default_avatar.png"')
 
         self.user_profile.avatar = None
         self.user_profile.save()
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEquals(response.get("Content-Disposition"), 'attachment; filename="default_avatar.png"')
 
 
@@ -377,13 +378,13 @@ class HideQuickStartViewTests(TestCase):
         user_profile.hide_quickstart = False
         user_profile.save()
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.other_user_uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         user_profile.refresh_from_db()
         self.assertTrue(user_profile.hide_quickstart)
 
@@ -400,17 +401,17 @@ class SignupViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         settings.ACCOUNT_ALLOW_REGISTRATION = True
         self.assertTrue(settings.ACCOUNT_ALLOW_REGISTRATION)
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "account/signup.html")
 
         settings.ACCOUNT_ALLOW_REGISTRATION = False
         self.assertFalse(settings.ACCOUNT_ALLOW_REGISTRATION)
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "account/signup_closed.html")

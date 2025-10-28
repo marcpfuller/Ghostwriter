@@ -1,6 +1,7 @@
 # Standard Libraries
 import logging
 from datetime import date, datetime, timedelta
+from http import HTTPStatus
 from io import StringIO
 
 # Django Imports
@@ -240,15 +241,15 @@ class DashboardTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "index.html")
 
     def test_custom_context_exists(self):
@@ -283,22 +284,22 @@ class ManagementTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "home/management.html")
 
     def test_custom_context_exists(self):
@@ -322,7 +323,7 @@ class UpdateSessionTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_sticky_sidebar_value(self):
         self.client_auth.post(self.uri, {"session_data": "sidebar"})
@@ -335,7 +336,7 @@ class UpdateSessionTests(TestCase):
 
     def test_invalid_get_method(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.status_code, HTTPStatus.METHOD_NOT_ALLOWED)
 
 
 class TestAWSConnectionTests(TestCase):
@@ -357,15 +358,15 @@ class TestAWSConnectionTests(TestCase):
 
     def test_view_uri_post(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_staff(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class TestDOConnectionTests(TestCase):
@@ -387,15 +388,15 @@ class TestDOConnectionTests(TestCase):
 
     def test_view_uri_post(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_staff(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class TestNamecheapConnectionTests(TestCase):
@@ -417,15 +418,15 @@ class TestNamecheapConnectionTests(TestCase):
 
     def test_view_uri_post(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_staff(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class TestSlackConnectionTests(TestCase):
@@ -447,15 +448,15 @@ class TestSlackConnectionTests(TestCase):
 
     def test_view_uri_post(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_staff(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class TestVirusTotalConnectionTests(TestCase):
@@ -477,15 +478,15 @@ class TestVirusTotalConnectionTests(TestCase):
 
     def test_view_uri_post(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_staff(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ProtectedServeTest(TestCase):
@@ -507,9 +508,9 @@ class ProtectedServeTest(TestCase):
     def test_view_uri(self):
         assert settings.DEBUG
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertContains(response, "ghostwriter.home.views.protected_serve", status_code=404)
 
     def test_view_uri_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

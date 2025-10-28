@@ -1,6 +1,7 @@
 # Standard Libraries
 import logging
 from datetime import date, timedelta
+from http import HTTPStatus
 
 # Django Imports
 from django.test import Client, TestCase
@@ -58,7 +59,7 @@ class IndexViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to custom template tags and filters
@@ -126,11 +127,11 @@ class RollCodenameViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to :model:`rolodex.ProjectObjective`
@@ -160,7 +161,7 @@ class ProjectObjectiveStatusUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(
             force_str(response.content),
             {
@@ -173,7 +174,7 @@ class ProjectObjectiveStatusUpdateViewTests(TestCase):
         self.assertEqual(self.objective.status, self.in_progress)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(
             force_str(response.content),
             {
@@ -186,7 +187,7 @@ class ProjectObjectiveStatusUpdateViewTests(TestCase):
         self.assertEqual(self.objective.status, self.missed)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(
             force_str(response.content),
             {
@@ -200,10 +201,10 @@ class ProjectObjectiveStatusUpdateViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
 
 class ProjectObjectiveToggleViewTests(TestCase):
@@ -235,7 +236,7 @@ class ProjectObjectiveToggleViewTests(TestCase):
         self.objective.save()
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         self.objective.refresh_from_db()
@@ -254,10 +255,10 @@ class ProjectObjectiveToggleViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
 
 # Tests related to :model:`rolodex.Project`
@@ -293,7 +294,7 @@ class ProjectStatusToggleViewTests(TestCase):
         self.project.save()
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         self.project.refresh_from_db()
@@ -313,10 +314,10 @@ class ProjectStatusToggleViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
 
 # Tests related to :model:`rolodex.ProjectScope`
@@ -343,18 +344,18 @@ class ProjectScopeExportViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_download_success(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertEqual(response.get("Content-Disposition"), f'attachment; filename="{self.scope.name}_scope.txt"')
 
@@ -379,15 +380,15 @@ class ClientNoteUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.other_user_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ClientNoteDeleteTests(TestCase):
@@ -412,7 +413,7 @@ class ClientNoteDeleteTests(TestCase):
         self.assertEqual(len(self.ClientNote.objects.all()), 1)
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Note successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -424,14 +425,14 @@ class ClientNoteDeleteTests(TestCase):
         uri = reverse("rolodex:ajax_delete_client_note", kwargs={"pk": note.pk})
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         note = ClientNoteFactory()
         uri = reverse("rolodex:ajax_delete_client_note", kwargs={"pk": note.pk})
 
         response = self.client.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ProjectNoteUpdateTests(TestCase):
@@ -454,15 +455,15 @@ class ProjectNoteUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.other_user_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ProjectNoteDeleteTests(TestCase):
@@ -487,7 +488,7 @@ class ProjectNoteDeleteTests(TestCase):
         self.assertEqual(len(self.ProjectNote.objects.all()), 1)
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Note successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -499,14 +500,14 @@ class ProjectNoteDeleteTests(TestCase):
         uri = reverse("rolodex:ajax_delete_project_note", kwargs={"pk": note.pk})
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         note = ProjectNoteFactory()
         uri = reverse("rolodex:ajax_delete_project_note", kwargs={"pk": note.pk})
 
         response = self.client.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ProjectCreateTests(TestCase):
@@ -532,29 +533,29 @@ class ProjectCreateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.client_mgr.get(self.no_client_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         response = self.client.get(self.no_client_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         response = self.client_auth.get(self.no_client_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "rolodex/project_form.html")
 
     def test_custom_context_exists(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertIn("assignments", response.context)
         self.assertIn("cancel_link", response.context)
@@ -568,7 +569,7 @@ class ProjectCreateTests(TestCase):
 
     def test_initial_form_values(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("client", response.context["form"].initial)
         self.assertIn("codename", response.context["form"].initial)
         self.assertEqual(response.context["client"], self.project_client)
@@ -599,23 +600,23 @@ class ProjectComponentsUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "rolodex/project_form.html")
 
     def test_custom_context_exists(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.assertIn("objectives", response.context)
         self.assertIn("scopes", response.context)
@@ -657,38 +658,38 @@ class ClientListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "rolodex/client_list.html")
 
     def test_client_filtering(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 3)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
         self.assertEqual(response.context["filter"].qs[0].name, "SpecterOps")
 
         response = self.client_assign.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
         self.assertEqual(response.context["filter"].qs[0].name, "SpecterPops")
 
         response = self.client_mgr.get(f"{self.uri}?name=SpecterOps")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
         response = self.client_mgr.get(f"{self.uri}?name=pops")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 2)
 
 
@@ -717,17 +718,17 @@ class ClientDetailViewTest(TestCase):
     # Projects the user cannot access are filtered in the template
     # def test_projects_assigned_only(self):
     #     response = self.client.get(self.uri)
-    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.status_code, HTTPStatus.OK)
     #     self.assertEqual(set(response.context["projects"]), {self.project_assigned})
 
     def test_projects_staff_all(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(set(response.context["projects"]), {self.project_assigned, self.project_unassigned})
 
     def test_projects_invited_all(self):
         response = self.client_invited.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(set(response.context["projects"]), {self.project_assigned, self.project_unassigned})
 
 
@@ -761,50 +762,50 @@ class ProjectListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "rolodex/project_list.html")
 
     def test_client_filtering(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 3)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 2)
 
         response = self.client_assign.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
         self.assertEqual(response.context["filter"].qs[0].codename, "P1")
 
         response = self.client_mgr.get(f"{self.uri}?client=SpecterOps")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
         response = self.client_mgr.get(f"{self.uri}?client=pops")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 2)
 
     def test_codename_filtering(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 3)
 
         response = self.client_mgr.get(f"{self.uri}?codename=p")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 3)
 
         response = self.client_mgr.get(f"{self.uri}?codename=p1")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
 
@@ -835,21 +836,21 @@ class AssignProjectContactViewTests(TestCase):
             "message": f"{self.contact.name} successfully added to your project.",
         }
         response = self.client_mgr.post(self.uri, {"contact": self.contact.pk})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri, {"contact": self.contact.pk})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri, {"contact": self.contact.pk})
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(project=self.project, operator=self.user)
         response = self.client_auth.post(self.uri, {"contact": self.other_contact.pk})
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         response = self.client_auth.post(self.uri, {"contact": self.contact.pk})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_invalid_contact_id(self):
         data = {
@@ -857,7 +858,7 @@ class AssignProjectContactViewTests(TestCase):
             "message": "Submitted contact ID was not an integer.",
         }
         response = self.client_mgr.post(self.uri, {"contact": "foo"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         data = {
@@ -865,7 +866,7 @@ class AssignProjectContactViewTests(TestCase):
             "message": "You must choose a contact.",
         }
         response = self.client_mgr.post(self.uri, {"contact": -1})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
 
@@ -888,20 +889,20 @@ class ProjectDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         ProjectAssignmentFactory(project=self.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 class ProjectInviteDeleteTests(TestCase):
     """Collection of tests for :view:`rolodex.ProjectInviteDelete`."""
@@ -926,10 +927,10 @@ class ProjectInviteDeleteTests(TestCase):
         self.assertEqual(len(self.ProjectInvite.objects.all()), 1)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Invite successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -960,10 +961,10 @@ class ClientInviteDeleteTests(TestCase):
         self.assertEqual(len(self.ClientInvite.objects.all()), 1)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Invite successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)

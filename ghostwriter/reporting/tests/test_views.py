@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from datetime import datetime
+from http import HTTPStatus
 
 # Django Imports
 from django.contrib.messages import get_messages
@@ -83,7 +84,7 @@ class IndexViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to custom template tags and filters
@@ -182,22 +183,22 @@ class AssignBlankFindingTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.post(self.uri)
-        self.assertTrue(response.status_code, 200)
+        self.assertTrue(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, "/accounts/login/?next="+self.uri)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         ProjectAssignmentFactory(operator=self.user, project=self.report.project)
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class ConvertFindingTests(TestCase):
@@ -226,20 +227,20 @@ class ConvertFindingTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, "/accounts/login/?next="+self.uri)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         self.user.enable_finding_create = True
         self.user.save()
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class AssignFindingTests(TestCase):
@@ -263,7 +264,7 @@ class AssignFindingTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_response_with_session_vars_with_permissions(self):
         self.session = self.client_auth.session
@@ -278,12 +279,12 @@ class AssignFindingTests(TestCase):
         )
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(operator=self.user, project=self.report.project)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_response_with_report_id(self):
         self.session = self.client_mgr.session
@@ -291,7 +292,7 @@ class AssignFindingTests(TestCase):
         self.session.save()
 
         response = self.client_mgr.post(self.uri, data={"report": self.report.id})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_response_with_bad_session_vars(self):
         self.session = self.client_mgr.session
@@ -367,12 +368,12 @@ class ReportCloneTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_nonexistent_report(self):
         uri = reverse("reporting:report_clone", kwargs={"pk": 100})
         response = self.client_mgr.get(uri)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_clone_with_zero_findings_and_observations(self):
         self.ReportFindingLink.objects.all().delete()
@@ -526,15 +527,15 @@ class FindingsListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/finding_list.html")
 
     def test_custom_context_exists(self):
@@ -544,26 +545,26 @@ class FindingsListViewTests(TestCase):
 
     def test_lists_all_findings(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == len(self.findings))
 
     def test_search_findings(self):
         response = self.client_auth.get(self.uri + "?finding=Finding+2")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == 1)
 
     def test_filter_findings(self):
         response = self.client_auth.get(self.uri + "?title=Finding+2&submit=Filter")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == 1)
 
     def test_search_report_findings(self):
         response = self.client_auth.get(self.uri + "?on_reports=on")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == len(self.accessibleReportFindings))
 
         response = self.client_auth.get(self.uri + "?on_reports=on&not_cloned=on")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == 1)
         blank_findings = self.ReportFindingLink.objects.filter(added_as_blank=True, report=self.accessibleReport)
         self.assertQuerysetEqual(response.context["filter"].qs, list(blank_findings))
@@ -587,15 +588,15 @@ class FindingDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/finding_detail.html")
 
 
@@ -622,17 +623,17 @@ class FindingCreateViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, "/accounts/login/?next="+self.uri)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         self.user.enable_finding_create = True
         self.user.save()
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class FindingUpdateViewTests(TestCase):
@@ -655,24 +656,24 @@ class FindingUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         self.user.enable_finding_edit = True
         self.user.save()
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/finding_update.html")
 
 
@@ -696,24 +697,24 @@ class FindingDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         self.user.enable_finding_delete = True
         self.user.save()
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -754,12 +755,12 @@ class FindingExportViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.get("Content-Type"), "text/csv")
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ObservationExportViewTests(TestCase):
@@ -784,12 +785,12 @@ class ObservationExportViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.get("Content-Type"), "text/csv")
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 # Tests related to :model:`reporting.Report`
@@ -820,15 +821,15 @@ class ReportsListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_list.html")
 
     def test_custom_context_exists(self):
@@ -837,19 +838,19 @@ class ReportsListViewTests(TestCase):
 
     def test_lists_all_reports(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == len(self.reports))
 
     def test_lists_filtered_reports(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == 0)
 
         for report in self.reports[:5]:
             ProjectAssignmentFactory(project=report.project, operator=self.user)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs) == 5)
 
 
@@ -873,23 +874,23 @@ class ReportDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_detail.html")
 
 
@@ -917,14 +918,14 @@ class ReportCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertInHTML(
             '<option value="" selected>-- No Active Projects --</option>',
             response.content.decode(),
@@ -932,13 +933,13 @@ class ReportCreateViewTests(TestCase):
 
         ProjectAssignmentFactory(project=self.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["project"].queryset), 1)
         self.assertEqual(response.context["form"].fields["project"].queryset[0], self.project)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_form.html")
 
     def test_custom_context_exists(self):
@@ -948,7 +949,7 @@ class ReportCreateViewTests(TestCase):
 
     def test_view_uri_with_project_exists_at_desired_location(self):
         response = self.client_mgr.get(self.project_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_custom_context_changes_for_project(self):
         response = self.client_mgr.get(self.project_uri)
@@ -1009,7 +1010,7 @@ class ReportCreateViewTests(TestCase):
         response = self.client_mgr.get(self.bad_project_uri)
         self.assertIn("exception", response.context)
         self.assertEqual(response.context["exception"], "No Project matches the given query.")
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
 
 class ReportUpdateViewTests(TestCase):
@@ -1034,31 +1035,31 @@ class ReportUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["project"].queryset), 1)
         self.assertEqual(response.context["form"].fields["project"].queryset[0], self.report.project)
         self.assertTrue(response.context["form"].fields["project"].disabled)
 
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["project"].queryset), 6)
         self.assertFalse(response.context["form"].fields["project"].disabled)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_form.html")
 
     def test_custom_context_exists(self):
@@ -1119,23 +1120,23 @@ class ReportDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -1190,7 +1191,7 @@ class ReportActivateViewTests(TestCase):
 
     def test_view_uri_sets_sessions_variables(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.session = self.client_mgr.session
         self.assertEqual(
             self.session["active_report"],
@@ -1199,14 +1200,14 @@ class ReportActivateViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class ReportStatusToggleViewTests(TestCase):
@@ -1228,26 +1229,26 @@ class ReportStatusToggleViewTests(TestCase):
 
     def test_view_uri_toggles_value(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.report.refresh_from_db()
         self.assertEqual(self.report.complete, True)
 
         response = self.client_mgr.post(self.uri)
         self.report.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(self.report.complete, False)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class ReportDeliveryToggleViewTests(TestCase):
@@ -1269,26 +1270,26 @@ class ReportDeliveryToggleViewTests(TestCase):
 
     def test_view_uri_toggles_value(self):
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.report.refresh_from_db()
         self.assertEqual(self.report.delivered, True)
 
         response = self.client_mgr.post(self.uri)
         self.report.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(self.report.delivered, False)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 # Tests related to :model:`reporting.ReportFindingLink`
@@ -1328,22 +1329,22 @@ class ReportFindingLinkUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_finding_link_update.html")
 
 
@@ -1384,18 +1385,18 @@ class ReportObservationLinkUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_observation_link_update.html")
 
 
@@ -1428,22 +1429,22 @@ class EvidenceDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.img_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.img_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.img_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.img_evidence.finding.report.project, operator=self.user)
         response = self.client_auth.get(self.img_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.img_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/evidence_detail.html")
 
 
@@ -1487,15 +1488,15 @@ class BaseEvidenceCreateViewTests:
     # Testing regular form view
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/evidence_form.html")
 
     def test_custom_context_exists(self):
@@ -1509,22 +1510,22 @@ class BaseEvidenceCreateViewTests:
     # Testing modal form view
     def test_view_modal_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.modal_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_modal_requires_login_and_permissions(self):
         response = self.client.get(self.modal_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.modal_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(project=self.evidence.associated_report.project, operator=self.user)
         response = self.client_auth.get(self.modal_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_modal_uses_correct_template(self):
         response = self.client_mgr.get(self.modal_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/evidence_form_modal.html")
 
     def test_custom_modal_context_exists(self):
@@ -1539,15 +1540,15 @@ class BaseEvidenceCreateViewTests:
     # Testing modal success view
     def test_view_modal_success_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.modal_success_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_modal_success_requires_login(self):
         response = self.client.get(self.modal_success_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_modal_success_uses_correct_template(self):
         response = self.client_mgr.get(self.modal_success_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/evidence_modal_success.html")
 
 
@@ -1594,22 +1595,22 @@ class EvidenceUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.evidence.finding.report.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/evidence_form.html")
 
     def test_custom_context_exists(self):
@@ -1640,22 +1641,22 @@ class EvidenceDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.evidence.finding.report.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -1715,56 +1716,56 @@ class ReportTemplateListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs), self.num_of_templates)
 
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTrue(len(response.context["filter"].qs), self.num_of_templates + 1)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_templates_list.html")
 
     def test_template_filtering(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 10)
 
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 11)
 
         response = self.client_mgr.get(f"{self.uri}?name=filtered")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
         response = self.client_auth.get(f"{self.uri}?doc_type=1")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 5)
 
         response = self.client_auth.get(f"{self.uri}?doc_type=2")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 5)
 
         response = self.client_auth.get(f"{self.uri}?client=spec")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 0)
 
         response = self.client_mgr.get(f"{self.uri}?client=spec")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
         response = self.client_mgr.get(f"{self.uri}?tags=tag1")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["filter"].qs), 1)
 
 
@@ -1784,7 +1785,7 @@ class ReportTemplateDownloadTests(TestCase):
 
     def test_view_uri_returns_desired_download(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(
             response.get("Content-Disposition"),
             f'attachment; filename="{self.template.filename}"',
@@ -1792,7 +1793,7 @@ class ReportTemplateDownloadTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ReportTemplateDetailViewTests(TestCase):
@@ -1814,15 +1815,15 @@ class ReportTemplateDetailViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_template_detail.html")
 
     def test_view_for_protected_template(self):
@@ -1855,15 +1856,15 @@ class ReportTemplateCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_template_form.html")
 
     def test_custom_context_exists(self):
@@ -1902,15 +1903,15 @@ class ReportTemplateUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/report_template_form.html")
 
     def test_custom_context_exists(self):
@@ -1920,11 +1921,11 @@ class ReportTemplateUpdateViewTests(TestCase):
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.client_admin.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class ReportTemplateDeleteViewTests(TestCase):
@@ -1949,15 +1950,15 @@ class ReportTemplateDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -1977,11 +1978,11 @@ class ReportTemplateDeleteViewTests(TestCase):
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         response = self.client_admin.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class ReportTemplateLintViewTests(TestCase):
@@ -2013,16 +2014,16 @@ class ReportTemplateLintViewTests(TestCase):
         self.assertEqual(response.status_code, 405)
 
         response = self.client_auth.post(self.docx_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         response = self.client_auth.post(self.pptx_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_view_requires_login(self):
         response = self.client.get(self.docx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_linting_with_bad_style(self):
         data = {
@@ -2035,7 +2036,7 @@ class ReportTemplateLintViewTests(TestCase):
         self.docx_template.p_style = "bad_style"
         self.docx_template.save()
         response = self.client_auth.post(self.docx_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
         self.docx_template.p_style = "Normal"
         self.docx_template.save()
@@ -2057,11 +2058,11 @@ class UpdateTemplateLintResultsViewTests(TestCase):
 
     def test_view_uri_returns_desired_download(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ReportTemplateSwapViewTests(TestCase):
@@ -2122,7 +2123,7 @@ class ReportTemplateSwapViewTests(TestCase):
         response = self.client_mgr.post(
             self.uri, {"docx_template": self.docx_template.pk, "pptx_template": self.pptx_template.pk}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         # Test a negative value indicating no template is selected
@@ -2132,7 +2133,7 @@ class ReportTemplateSwapViewTests(TestCase):
             "pptx_lint_result": "success",
         }
         response = self.client_mgr.post(self.uri, {"docx_template": -5, "pptx_template": self.pptx_template.pk})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_invalid_templates(self):
@@ -2141,7 +2142,7 @@ class ReportTemplateSwapViewTests(TestCase):
             "message": "Submitted template ID was not an integer.",
         }
         response = self.client_mgr.post(self.uri, {"docx_template": "C", "pptx_template": self.pptx_template.pk})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         data = {
@@ -2149,26 +2150,26 @@ class ReportTemplateSwapViewTests(TestCase):
             "message": "Submitted template ID does not exist.",
         }
         response = self.client_mgr.post(self.uri, {"docx_template": 1000, "pptx_template": self.pptx_template.pk})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         data = {"result": "error", "message": "Submitted request was incomplete."}
         response = self.client_mgr.post(self.uri, {"docx_template": "", "pptx_template": self.pptx_template.pk})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(operator=self.user, project=self.report.project)
         response = self.client_auth.post(
             self.uri, {"docx_template": self.docx_template.pk, "pptx_template": self.pptx_template.pk}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_templates_with_linting_errors(self):
         data = {
@@ -2184,7 +2185,7 @@ class ReportTemplateSwapViewTests(TestCase):
         response = self.client_mgr.post(
             self.uri, {"docx_template": self.docx_template_warning.pk, "pptx_template": self.pptx_template_warning.pk}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         data = {
@@ -2200,7 +2201,7 @@ class ReportTemplateSwapViewTests(TestCase):
         response = self.client_mgr.post(
             self.uri, {"docx_template": self.docx_template_error.pk, "pptx_template": self.pptx_template_error.pk}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         data = {
@@ -2216,7 +2217,7 @@ class ReportTemplateSwapViewTests(TestCase):
         response = self.client_mgr.post(
             self.uri, {"docx_template": self.docx_template_failed.pk, "pptx_template": self.pptx_template_failed.pk}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         data = {
@@ -2232,7 +2233,7 @@ class ReportTemplateSwapViewTests(TestCase):
         response = self.client_mgr.post(
             self.uri, {"docx_template": self.docx_template_unknown.pk, "pptx_template": self.pptx_template_unknown.pk}
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
 
@@ -2264,11 +2265,11 @@ class GenerateReportTests(TestCase):
 
     def test_view_json_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.json_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_docx_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.docx_uri)
-        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.status_code, HTTPStatus.OK, response.content)
         self.assertEqual(
             response.get("Content-Type"),
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -2291,67 +2292,67 @@ class GenerateReportTests(TestCase):
 
     def test_view_all_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.all_uri)
-        self.assertEqual(response.status_code, 200, str(response))
+        self.assertEqual(response.status_code, HTTPStatus.OK, str(response))
         self.assertEqual(response.get("Content-Type"), "application/x-zip-compressed", str(response))
 
     def test_view_json_requires_login_and_permissions(self):
         response = self.client.get(self.json_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.json_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         assignment = ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.json_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         assignment.delete()
 
     def test_view_docx_requires_login_and_permissions(self):
         response = self.client.get(self.docx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.docx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         assignment = ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.docx_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         assignment.delete()
 
     def test_view_xlsx_requires_login_and_permissions(self):
         response = self.client.get(self.xlsx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.xlsx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         assignment = ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.xlsx_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         assignment.delete()
 
     def test_view_pptx_requires_login_and_permissions(self):
         response = self.client.get(self.pptx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.pptx_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         assignment = ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.pptx_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         assignment.delete()
 
     def test_view_all_requires_login_and_permissions(self):
         response = self.client.get(self.all_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.all_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         assignment = ProjectAssignmentFactory(project=self.report.project, operator=self.user)
         response = self.client_auth.get(self.all_uri)
-        self.assertEqual(response.status_code, 200, str(response.request))
+        self.assertEqual(response.status_code, HTTPStatus.OK, str(response.request))
         assignment.delete()
 
     def test_view_docx_with_missing_template(self):
@@ -2545,15 +2546,15 @@ class LocalFindingNoteUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.other_user_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class LocalFindingNoteDeleteTests(TestCase):
@@ -2578,7 +2579,7 @@ class LocalFindingNoteDeleteTests(TestCase):
         self.assertEqual(len(self.LocalFindingNote.objects.all()), 1)
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Note successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -2590,14 +2591,14 @@ class LocalFindingNoteDeleteTests(TestCase):
         uri = reverse("reporting:ajax_delete_local_finding_note", kwargs={"pk": note.pk})
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         note = LocalFindingNoteFactory()
         uri = reverse("reporting:ajax_delete_local_finding_note", kwargs={"pk": note.pk})
 
         response = self.client.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class FindingNoteUpdateTests(TestCase):
@@ -2620,15 +2621,15 @@ class FindingNoteUpdateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_permissions(self):
         response = self.client_auth.get(self.other_user_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class FindingNoteDeleteTests(TestCase):
@@ -2653,7 +2654,7 @@ class FindingNoteDeleteTests(TestCase):
         self.assertEqual(len(self.FindingNote.objects.all()), 1)
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         data = {"result": "success", "message": "Note successfully deleted!"}
         self.assertJSONEqual(force_str(response.content), data)
@@ -2665,14 +2666,14 @@ class FindingNoteDeleteTests(TestCase):
         uri = reverse("reporting:ajax_delete_finding_note", kwargs={"pk": note.pk})
 
         response = self.client_auth.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_requires_login(self):
         note = FindingNoteFactory()
         uri = reverse("reporting:ajax_delete_finding_note", kwargs={"pk": note.pk})
 
         response = self.client.post(uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class EvidenceDownloadTests(TestCase):
@@ -2696,7 +2697,7 @@ class EvidenceDownloadTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEquals(
             response.get("Content-Disposition"),
             f'attachment; filename="{self.evidence_file.filename}"',
@@ -2704,23 +2705,23 @@ class EvidenceDownloadTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.evidence_file.report.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client_mgr.get(self.deleted_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         if os.path.exists(self.deleted_evidence_file.document.path):
             os.remove(self.deleted_evidence_file.document.path)
 
         response = self.client_mgr.get(self.deleted_uri)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
 
 class EvidencePreviewTests(TestCase):
@@ -2747,7 +2748,7 @@ class EvidencePreviewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertInHTML(
             f'<img class="img-evidence" src="{self.download_uri}"/>',
             response.content.decode(),
@@ -2755,27 +2756,27 @@ class EvidencePreviewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.evidence_file.report.project)
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client_mgr.get(self.deleted_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         if os.path.exists(self.deleted_evidence_file.document.path):
             os.remove(self.deleted_evidence_file.document.path)
 
         response = self.client_mgr.get(self.deleted_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertInHTML("<p>FILE NOT FOUND</p>", response.content.decode())
 
         response = self.client_mgr.get(self.unknown_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertInHTML("<p>Evidence file type cannot be displayed.</p>", response.content.decode())
 
 
@@ -2803,17 +2804,17 @@ class ObservationCreateViewTests(TestCase):
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, "/accounts/login/?next="+self.uri)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         self.user.enable_observation_create = True
         self.user.save()
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ObservationUpdateViewTests(TestCase):
@@ -2836,24 +2837,24 @@ class ObservationUpdateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         self.user.enable_observation_edit = True
         self.user.save()
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "reporting/observation_update.html")
 
 
@@ -2877,24 +2878,24 @@ class ObservationDeleteViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.failure_redirect_uri)
 
         self.user.enable_observation_delete = True
         self.user.save()
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "confirm_delete.html")
 
     def test_custom_context_exists(self):
@@ -2934,7 +2935,7 @@ class AssignObservationViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_response_with_session_vars_with_permissions(self):
         self.session = self.client_auth.session
@@ -2949,12 +2950,12 @@ class AssignObservationViewTests(TestCase):
         )
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         ProjectAssignmentFactory(operator=self.user, project=self.report.project)
 
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_response_with_report_id(self):
         self.session = self.client_mgr.session
@@ -2962,7 +2963,7 @@ class AssignObservationViewTests(TestCase):
         self.session.save()
 
         response = self.client_mgr.post(self.uri, data={"report": self.report.id})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_response_with_bad_session_vars(self):
         self.session = self.client_mgr.session

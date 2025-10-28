@@ -3,6 +3,7 @@ import csv
 import logging
 import os
 from datetime import datetime
+from http import HTTPStatus
 
 # Django Imports
 from django.test import Client, TestCase
@@ -54,15 +55,15 @@ class OplogListViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "oplog/oplog_list.html")
 
     def test_oplog_list_values(self):
@@ -104,23 +105,23 @@ class OplogListEntriesTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.oplog.project)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_template(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "oplog/oplog_detail.html")
 
 
@@ -206,20 +207,20 @@ class OplogEntriesImportTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "oplog/oplog_import.html")
 
     def test_view_uri_with_log_id(self):
         response = self.client_auth.get(f"{self.uri}?log={self.oplog.id}")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("initial_log", response.context)
         self.assertEqual(response.context["initial_log"], None)
 
@@ -227,7 +228,7 @@ class OplogEntriesImportTests(TestCase):
         self.assertEqual(response.context["initial_log"], self.oplog)
 
         response = self.client_mgr.get(f"{self.uri}?log=999")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.context["initial_log"], None)
 
     def test_import_updates_existing_entries_and_adds_new_entries(self):
@@ -242,20 +243,20 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.filename, "r") as csvfile:
             response = self.client_mgr.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri)
             self.assertEqual(self.OplogEntry.objects.count(), self.num_of_entries)
 
         with open(self.filename, "r") as csvfile:
             response = self.client_auth.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.failure_redirect_uri)
             self.assertEqual(self.OplogEntry.objects.count(), self.num_of_entries)
 
         ProjectAssignmentFactory(operator=self.user, project=self.oplog.project)
         with open(self.filename, "r") as csvfile:
             response = self.client_auth.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri)
             self.assertEqual(self.OplogEntry.objects.count(), self.num_of_entries)
 
@@ -276,7 +277,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.update_filename, "r") as updatecsv:
             response = self.client_mgr.post(self.uri, {"csv_file": updatecsv, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri)
             self.assertEqual(self.OplogEntry.objects.count(), self.num_of_entries + 1)
             entry.refresh_from_db()
@@ -293,7 +294,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.filename, "r") as csvfile:
             response = self.client_mgr.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri)
             self.assertEqual(self.OplogEntry.objects.filter(oplog_id=self.oplog).count(), self.num_of_entries)
             self.assertEqual(self.OplogEntry.objects.filter(oplog_id=9000).count(), 0)
@@ -304,7 +305,7 @@ class OplogEntriesImportTests(TestCase):
         """Test an invalid csv file is handled gracefully."""
         with open(self.update_filename, "w+") as updatecsv:
             response = self.client_mgr.post(self.uri, {"csv_file": updatecsv, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.failure_redirect_uri)
             messages = list(get_messages(response.wsgi_request))
             self.assertEqual(
@@ -322,7 +323,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.filename, "r") as csvfile:
             response = self.client_mgr.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.failure_redirect_uri)
             messages = list(get_messages(response.wsgi_request))
             self.assertEqual(str(messages[0]), "Your log file needs the required header row and at least one entry.")
@@ -342,7 +343,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.update_filename, "r") as updatecsv:
             response = self.client_mgr.post(self.uri, {"csv_file": updatecsv, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri)
             self.assertEqual(self.OplogEntry.objects.filter(oplog_id=self.oplog).count(), starting_entries)
 
@@ -358,7 +359,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.update_filename, "r") as updatecsv:
             response = self.client_mgr.post(self.uri, {"csv_file": updatecsv, "oplog_id": entry.oplog_id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.failure_redirect_uri)
 
         with open(self.filename, "w") as csvfile:
@@ -370,7 +371,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.filename, "r") as csvfile:
             response = self.client_mgr.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri, msg_prefix=messages_in_response(response))
             self.assertEqual(self.OplogEntry.objects.filter(oplog_id=self.oplog).count(), starting_entries + 1)
 
@@ -389,7 +390,7 @@ class OplogEntriesImportTests(TestCase):
 
         with open(self.filename, "r") as csvfile:
             response = self.client_mgr.post(self.uri, {"csv_file": csvfile, "oplog_id": self.oplog.id})
-            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.status_code, HTTPStatus.FOUND)
             self.assertRedirects(response, self.redirect_uri)
             self.assertEqual(self.OplogEntry.objects.filter(oplog_id=self.oplog).count(), self.num_of_entries)
 
@@ -417,28 +418,28 @@ class OplogCreateViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uri_with_project_exists_at_desired_location(self):
         response = self.client_auth.get(self.project_uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["project"].queryset), 1)
         self.assertEqual(response.context["form"].fields["project"].queryset[0], self.project)
 
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.context["form"].fields["project"].queryset), 6)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "oplog/oplog_form.html")
 
     def test_custom_context_exists(self):
@@ -509,7 +510,7 @@ class OplogMuteToggleViewTests(TestCase):
         self.log.save()
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         self.log.refresh_from_db()
@@ -528,11 +529,11 @@ class OplogMuteToggleViewTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.post(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_permissions(self):
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         data = {
             "result": "error",
             "message": "Only a manager or admin can mute notifications.",
@@ -540,15 +541,15 @@ class OplogMuteToggleViewTests(TestCase):
         self.assertJSONEqual(force_str(response.content), data)
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("success", force_str(response.content))
 
         response = self.client_admin.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("success", force_str(response.content))
 
         response = self.client_mgr.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("success", force_str(response.content))
 
 
@@ -572,19 +573,19 @@ class OplogEntryUpdateViewTests(TestCase):
 
     def test_permissions(self):
         response = self.client_auth.get(self.uri, **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"})
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.log.project)
 
         response = self.client_auth.get(self.uri, **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client_mgr.get(self.uri, **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_uses_correct_ajax_template(self):
         response = self.client_mgr.get(self.uri, **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "oplog/snippets/oplogentry_form_inner.html")
 
 
@@ -612,19 +613,19 @@ class OplogExportViewTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_mgr.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login_and_permissions(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
         ProjectAssignmentFactory(operator=self.user, project=self.oplog.project)
 
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class OplogSanitizeViewTests(TestCase):
@@ -677,7 +678,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": '[{"name": "user_context", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_view_requires_login(self):
@@ -686,7 +687,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": '[{"name": "user_context", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_permissions(self):
         response = self.client_auth.post(
@@ -694,7 +695,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": '[{"name": "user_context", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         data = {
             "result": "error",
             "message": "Only a manager or admin can choose to sanitize a log.",
@@ -706,7 +707,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": '[{"name": "user_context", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("success", force_str(response.content))
 
         response = self.client_admin.post(
@@ -714,7 +715,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": '[{"name": "user_context", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("success", force_str(response.content))
 
     def test_view_with_invalid_fields(self):
@@ -723,7 +724,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": '[{"name": "not_a_field", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertIn("No fields selected for sanitization", force_str(response.content))
 
     def test_view_with_empty_fields(self):
@@ -736,7 +737,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"fields": "[]"},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         response = self.client_mgr.post(
@@ -744,7 +745,7 @@ class OplogSanitizeViewTests(TestCase):
             data={"not_fields": '[{"name": "not_a_field", "value": "on"}]'},
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_field_sanitization_with_extra_field(self):
@@ -766,7 +767,7 @@ class OplogSanitizeViewTests(TestCase):
             },
             **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
         self.entry.refresh_from_db()
         self.assertEqual(self.entry.user_context, "")

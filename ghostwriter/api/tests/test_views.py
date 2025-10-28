@@ -2,6 +2,7 @@
 import base64
 import logging
 import os
+from http import HTTPStatus
 from datetime import date, datetime, timedelta
 
 # Django Imports
@@ -98,7 +99,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_action_requires_correct_secret(self):
         _, token = utils.generate_jwt(self.user)
@@ -108,7 +109,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": "wrong", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_action_requires_secret(self):
         _, token = utils.generate_jwt(self.user)
@@ -120,7 +121,7 @@ class HasuraViewTests(TestCase):
                 "HTTP_AUTHORIZATION": f"Bearer {token}",
             },
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         result = {
             "message": "Unauthorized access method",
             "extensions": {
@@ -137,7 +138,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Missing all required inputs",
             "extensions": {
@@ -156,7 +157,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Missing one or more required inputs",
             "extensions": {
@@ -173,7 +174,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
     def test_action_requires_jwt(self):
         response = self.client.post(
@@ -184,7 +185,7 @@ class HasuraViewTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "No ``Authorization`` header found",
             "extensions": {
@@ -203,7 +204,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         self.user.is_active = True
         self.user.save()
 
@@ -215,7 +216,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_action_with_valid_tracked_token(self):
         response = self.client.post(
@@ -224,7 +225,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {self.user_token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_action_with_valid_tracked_token_and_inactive_user(self):
         response = self.client.post(
@@ -233,7 +234,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {self.inactive_token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_action_with_expired_tracked_token(self):
         response = self.client.post(
@@ -242,7 +243,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {self.expired_token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_action_with_revoked_tracked_token(self):
         response = self.client.post(
@@ -251,7 +252,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {self.revoked_token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
     def test_action_with_incomplete_header(self):
         result = {
@@ -267,7 +268,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": ""},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertJSONEqual(force_str(response.content), result)
 
         response = self.client.post(
@@ -276,7 +277,7 @@ class HasuraViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertJSONEqual(force_str(response.content), result)
 
 
@@ -308,7 +309,7 @@ class HasuraEventViewTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_action_requires_secret(self):
         response = self.client.post(
@@ -316,7 +317,7 @@ class HasuraEventViewTests(TestCase):
             data=self.data,
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
         result = {
             "message": "Unauthorized access method",
             "extensions": {
@@ -334,7 +335,7 @@ class HasuraEventViewTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": "wrong",
             },
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_with_invalid_json(self):
         response = self.client.post(
@@ -345,7 +346,7 @@ class HasuraEventViewTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Missing event data",
             "extensions": {
@@ -388,7 +389,7 @@ class HasuraWebhookTests(TestCase):
                 "HTTP_AUTHORIZATION": f"Bearer {token}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
     def test_graphql_webhook_without_jwt(self):
@@ -396,7 +397,7 @@ class HasuraWebhookTests(TestCase):
             self.uri,
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), self.public_data)
 
 
@@ -430,7 +431,7 @@ class HasuraLoginTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         # Test bypasses Hasura so the ``["data"]["login"]`` keys are not present
         self.assertTrue(response.json()["token"])
 
@@ -450,7 +451,7 @@ class HasuraLoginTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertJSONEqual(force_str(response.content), result)
 
     def test_graphql_login_with_mfa(self):
@@ -470,7 +471,7 @@ class HasuraLoginTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertJSONEqual(force_str(response.content), result)
 
         data = {"input": {"username": f"{self.user_mfa_required.username}", "password": f"{PASSWORD}"}}
@@ -482,7 +483,7 @@ class HasuraLoginTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         self.assertJSONEqual(force_str(response.content), result)
 
 
@@ -507,7 +508,7 @@ class HasuraWhoamiTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         # Test bypasses Hasura so the ``["data"]["whoami"]`` keys are not present
         self.assertEqual(response.json()["username"], self.user.username)
 
@@ -518,7 +519,7 @@ class HasuraWhoamiTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {user_token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         # Test bypasses Hasura so the ``["data"]["whoami"]`` keys are not present
         self.assertEqual(response.json()["username"], self.user.username)
 
@@ -549,7 +550,7 @@ class HasuraGenerateReportTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_graphql_generate_report_with_invalid_report(self):
         _, token = utils.generate_jwt(self.user)
@@ -560,7 +561,7 @@ class HasuraGenerateReportTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         result = {
             "message": "Unauthorized access",
@@ -579,7 +580,7 @@ class HasuraGenerateReportTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         result = {
             "message": "Unauthorized access",
@@ -675,7 +676,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(
             force_str(response.content),
             {
@@ -695,7 +696,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(
             force_str(response.content),
             {
@@ -714,7 +715,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Server Role Type does not exist",
             "extensions": {
@@ -738,7 +739,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "End date is before start date",
@@ -761,7 +762,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "Invalid date values (must be YYYY-MM-DD)",
@@ -780,7 +781,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "Domain does not exist",
@@ -799,7 +800,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "Activity Type does not exist",
@@ -818,7 +819,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         result = {
             "message": "Unauthorized access",
@@ -837,7 +838,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "Domain is unavailable",
@@ -858,7 +859,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "Server is unavailable",
@@ -877,7 +878,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
         result = {
             "message": "Domain is expired",
@@ -896,7 +897,7 @@ class HasuraCheckoutTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         result = {
             "message": "Unauthorized access",
@@ -957,7 +958,7 @@ class CheckoutDeleteViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.domain.refresh_from_db()
         self.assertEqual(self.domain.domain_status, self.domain_available)
 
@@ -969,7 +970,7 @@ class CheckoutDeleteViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.server.refresh_from_db()
         self.assertEqual(self.server.server_status, self.server_available)
 
@@ -981,7 +982,7 @@ class CheckoutDeleteViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         result = {
             "message": "Unauthorized access",
             "extensions": {
@@ -998,7 +999,7 @@ class CheckoutDeleteViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Checkout does not exist",
             "extensions": {
@@ -1042,7 +1043,7 @@ class GraphqlDeleteReportTemplateAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(self.ReportTemplate.objects.filter(id=self.template.id).exists())
 
     def test_deleting_template_with_invalid_id(self):
@@ -1053,7 +1054,7 @@ class GraphqlDeleteReportTemplateAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
     def test_deleting_protected_template_with_access(self):
         _, token = utils.generate_jwt(self.mgr_user)
@@ -1063,7 +1064,7 @@ class GraphqlDeleteReportTemplateAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_deleting_protected_template_without_access(self):
         _, token = utils.generate_jwt(self.user)
@@ -1073,7 +1074,7 @@ class GraphqlDeleteReportTemplateAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
         response = self.client.post(
             self.uri,
@@ -1081,7 +1082,7 @@ class GraphqlDeleteReportTemplateAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
 
 class GraphqlAttachFindingAction(TestCase):
@@ -1121,7 +1122,7 @@ class GraphqlAttachFindingAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         new_finding = response.json()["id"]
         self.assertTrue(self.ReportFindingLink.objects.filter(id=new_finding).exists())
         self.assertEqual(len(self.finding.tags.similar_objects()), 1)
@@ -1139,7 +1140,7 @@ class GraphqlAttachFindingAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         data = {"message": "Report does not exist", "extensions": {"code": "ReportDoesNotExist"}}
         self.assertJSONEqual(force_str(response.content), data)
 
@@ -1151,7 +1152,7 @@ class GraphqlAttachFindingAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         data = {"message": "Finding does not exist", "extensions": {"code": "FindingDoesNotExist"}}
         self.assertJSONEqual(force_str(response.content), data)
 
@@ -1163,7 +1164,7 @@ class GraphqlAttachFindingAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_attaching_finding_without_access(self):
         _, token = utils.generate_jwt(self.other_user)
@@ -1173,7 +1174,7 @@ class GraphqlAttachFindingAction(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
 
 
 class GraphqlUploadEvidenceViewTests(TestCase):
@@ -1208,7 +1209,7 @@ class GraphqlUploadEvidenceViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED, response.content)
         id = response.json()["id"]
         evidence = Evidence.objects.get(pk=id)
         self.assertEqual(evidence.caption, data["caption"])
@@ -1232,7 +1233,7 @@ class GraphqlUploadEvidenceViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertNotEqual(response.status_code, 201, response.content)
+        self.assertNotEqual(response.status_code, HTTPStatus.CREATED, response.content)
 
     def test_upload_finding(self):
         _, token = utils.generate_jwt(self.user)
@@ -1251,7 +1252,7 @@ class GraphqlUploadEvidenceViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.status_code, HTTPStatus.CREATED, response.content)
         id = response.json()["id"]
         evidence = Evidence.objects.get(pk=id)
         self.assertEqual(evidence.caption, data["caption"])
@@ -1275,7 +1276,7 @@ class GraphqlUploadEvidenceViewTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertNotEqual(response.status_code, 201, response.content)
+        self.assertNotEqual(response.status_code, HTTPStatus.CREATED, response.content)
 
 
 class GraphqlGenerateCodenameActionTests(TestCase):
@@ -1296,7 +1297,7 @@ class GraphqlGenerateCodenameActionTests(TestCase):
             content_type="application/json",
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class GraphqlGetExtraFieldSpecActionTests(TestCase):
@@ -1324,7 +1325,7 @@ class GraphqlGetExtraFieldSpecActionTests(TestCase):
             data={"input": {"model": "finding"}},
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client.post(
             self.uri,
@@ -1332,7 +1333,7 @@ class GraphqlGetExtraFieldSpecActionTests(TestCase):
             data={"input": {"model": "Finding"}},
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         response = self.client.post(
             self.uri,
@@ -1340,7 +1341,7 @@ class GraphqlGetExtraFieldSpecActionTests(TestCase):
             data={"input": {"model": "Reporting.Finding"}},
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         extra_field_model = self.ExtraFieldModel.objects.get(pk="reporting.Finding")
         ExtraFieldSpecFactory(
@@ -1356,7 +1357,7 @@ class GraphqlGetExtraFieldSpecActionTests(TestCase):
             data={"input": {"model": "finding"}},
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json()["extraFieldSpec"]["test_field"]["internalName"], "test_field")
 
         response = self.client.post(
@@ -1365,7 +1366,7 @@ class GraphqlGetExtraFieldSpecActionTests(TestCase):
             data={"input": {"model": "bad_model_name"}},
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         self.assertEqual(response.json()["message"], "Model does not exist")
 
 
@@ -1415,7 +1416,7 @@ class HasuraCreateUserTests(TestCase):
             ),
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         created_user = User.objects.get(username="validuser")
         self.assertEqual(created_user.email, "validuser@specterops.io")
@@ -1427,7 +1428,7 @@ class HasuraCreateUserTests(TestCase):
             data=self.generate_data("validuser", "validuser@specterops.io", "validuser", "user"),
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "A user with that username already exists",
             "extensions": {
@@ -1444,7 +1445,7 @@ class HasuraCreateUserTests(TestCase):
             data=self.generate_data("badtimezone", "badtimezone@specterops.io", "badtimezone", "user", timezone="PST"),
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Invalid timezone",
             "extensions": {
@@ -1461,7 +1462,7 @@ class HasuraCreateUserTests(TestCase):
             data=self.generate_data("badrole", "badrole@specterops.io", "badrole", "invalid"),
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
         result = {
             "message": "Invalid user role",
             "extensions": {
@@ -1478,7 +1479,7 @@ class HasuraCreateUserTests(TestCase):
             data=self.generate_data("mgruser", "mgruser@specterops.io", "mgruser", "manager"),
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         result = {
             "message": "Unauthorized to create user with this role",
             "extensions": {
@@ -1495,7 +1496,7 @@ class HasuraCreateUserTests(TestCase):
             data=self.generate_data("unprivileged", "unprivileged@specterops.io", "unprivileged", "manager"),
             **{"HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}", "HTTP_AUTHORIZATION": f"Bearer {token}"},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, HTTPStatus.UNAUTHORIZED)
         result = {
             "message": "Unauthorized access",
             "extensions": {
@@ -1558,7 +1559,7 @@ class GraphqlDomainUpdateEventTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.domain.refresh_from_db()
         self.assertEqual(self.domain.name, "chrismaddalena.com")
         self.assertEqual(self.domain.domain_status, self.expired_status)
@@ -1578,7 +1579,7 @@ class GraphqlDomainUpdateEventTests(TestCase):
         )
         self.domain.refresh_from_db()
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(self.domain.domain_status, self.available_status)
         self.assertFalse(self.domain.expired)
 
@@ -1669,7 +1670,7 @@ class GraphqlOplogEntryEventTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_graphql_oplogentry_update_event(self):
         response = self.client.post(
@@ -1680,7 +1681,7 @@ class GraphqlOplogEntryEventTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_graphql_oplogentry_delete_event(self):
         response = self.client.post(
@@ -1691,7 +1692,7 @@ class GraphqlOplogEntryEventTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
 
 class GraphqlReportFindingEventTests(TestCase):
@@ -1753,7 +1754,7 @@ class GraphqlReportFindingEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         first_finding.refresh_from_db()
         self.assertEqual(first_finding.position, 3)
         second_finding.refresh_from_db()
@@ -1791,7 +1792,7 @@ class GraphqlReportFindingEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         first_finding.refresh_from_db()
         second_finding.refresh_from_db()
         third_finding.refresh_from_db()
@@ -1824,7 +1825,7 @@ class GraphqlReportFindingEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         new_finding.refresh_from_db()
         self.assertEqual(new_finding.position, 3)
 
@@ -1857,7 +1858,7 @@ class GraphqlReportFindingEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         finding.refresh_from_db()
         self.assertEqual(finding.position, 1)
 
@@ -1890,7 +1891,7 @@ class GraphqlReportFindingEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         finding.refresh_from_db()
         total_findings = self.ReportFindingLink.objects.filter(report=self.report).count()
         self.assertEqual(finding.position, total_findings)
@@ -1929,7 +1930,7 @@ class GraphqlReportFindingEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         first_finding.refresh_from_db()
         third_finding.refresh_from_db()
         self.assertEqual(first_finding.position, 1)
@@ -1994,7 +1995,7 @@ class GraphqlProjectContactUpdateEventTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.primary_contact.refresh_from_db()
         self.assertFalse(self.primary_contact.primary)
@@ -2045,7 +2046,7 @@ class GraphqlProjectObjectiveUpdateEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.objective.refresh_from_db()
         self.assertTrue(self.objective.complete)
@@ -2070,7 +2071,7 @@ class GraphqlProjectObjectiveUpdateEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.objective.refresh_from_db()
         self.assertFalse(self.objective.complete)
@@ -2123,7 +2124,7 @@ class GraphqlProjectSubTaskUpdateEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.task.refresh_from_db()
         self.assertTrue(self.task.complete)
@@ -2142,7 +2143,7 @@ class GraphqlProjectSubTaskUpdateEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
         self.task.refresh_from_db()
         self.assertFalse(self.task.complete)
@@ -2256,7 +2257,7 @@ class GraphqlEvidenceUpdateEventTests(TestCase):
         )
 
         # The document should no longer exist
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(os.path.exists(self.finding_evidence.document.path))
 
         # The friendly name references should be changed
@@ -2274,7 +2275,7 @@ class GraphqlEvidenceUpdateEventTests(TestCase):
                 "HTTP_HASURA_ACTION_SECRET": f"{ACTION_SECRET}",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.finding.refresh_from_db()
         self.assertEqual(
             self.finding.impact, "<p>Here is some evidence:</p><p>{{.New Name}}</p><p>{{.ref New Name}}</p>"
@@ -2291,7 +2292,7 @@ class GraphqlEvidenceUpdateEventTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFalse(os.path.exists(self.deleted_evidence.document.path))
         self.finding.refresh_from_db()
         self.assertEqual(self.finding.mitigation, "<p>Here is some evidence:</p><p></p>")
@@ -2323,7 +2324,7 @@ class ApiKeyRevokeTests(TestCase):
     def test_view_uri_exists_at_desired_location(self):
         data = {"result": "success", "message": "Token successfully revoked!"}
         response = self.client_auth.post(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(force_str(response.content), data)
 
         self.token_obj.refresh_from_db()
@@ -2331,11 +2332,11 @@ class ApiKeyRevokeTests(TestCase):
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_revoking_another_users_token(self):
         response = self.client_auth.post(self.other_uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
 
 class ApiKeyCreateTests(TestCase):
@@ -2355,15 +2356,15 @@ class ApiKeyCreateTests(TestCase):
 
     def test_view_uri_exists_at_desired_location(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_view_requires_login(self):
         response = self.client.get(self.uri)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_view_uses_correct_template(self):
         response = self.client_auth.get(self.uri)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertTemplateUsed(response, "token_form.html")
 
     def test_custom_context_exists(self):
@@ -2408,10 +2409,10 @@ class CheckEditPermissionsTests(TestCase):
         headers = self.headers(self.manager)
         del headers["Hasura-Action-Secret"]
         response = self.client.post(self.uri, content_type="application/json", headers=headers, data=self.data())
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
         response = self.client.post(self.uri, content_type="application/json", headers=headers, data=self.data("admin"))
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
 
     def test_access_finding_disallowed(self):
         response = self.client.post(
@@ -2420,7 +2421,7 @@ class CheckEditPermissionsTests(TestCase):
             headers=self.headers(self.user),
             data=self.data(),
         )
-        self.assertEquals(response.status_code, 403, response.content)
+        self.assertEquals(response.status_code, HTTPStatus.FORBIDDEN, response.content)
 
     def test_access_finding_allowed(self):
         response = self.client.post(
@@ -2429,7 +2430,7 @@ class CheckEditPermissionsTests(TestCase):
             headers=self.headers(self.manager),
             data=self.data(),
         )
-        self.assertEquals(response.status_code, 200, response.content)
+        self.assertEquals(response.status_code, HTTPStatus.OK, response.content)
 
     def test_access_finding_not_found(self):
         data = self.data()
@@ -2440,7 +2441,7 @@ class CheckEditPermissionsTests(TestCase):
             headers=self.headers(self.manager),
             data=data,
         )
-        self.assertEquals(response.status_code, 404, response.content)
+        self.assertEquals(response.status_code, HTTPStatus.NOT_FOUND, response.content)
 
 
 class GetTagsTest(TestCase):
@@ -2477,7 +2478,7 @@ class GetTagsTest(TestCase):
             headers=self.headers(self.manager),
             data=self.data(),
         )
-        self.assertEquals(response.status_code, 200, response.content)
+        self.assertEquals(response.status_code, HTTPStatus.OK, response.content)
         body = response.json()
         self.assertEqual(set(body["tags"]), self.tags)
 
@@ -2489,7 +2490,7 @@ class GetTagsTest(TestCase):
             data=self.data(),
         )
         self.assertFalse(self.report_finding.user_can_view(self.user))
-        self.assertEquals(response.status_code, 403, response.content)
+        self.assertEquals(response.status_code, HTTPStatus.FORBIDDEN, response.content)
         body = response.json()
         self.assertFalse("tags" in body, body)
 
@@ -2500,7 +2501,7 @@ class GetTagsTest(TestCase):
             headers=self.headers(None),
             data=self.data("admin"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         body = response.json()
         self.assertEqual(set(body["tags"]), self.tags)
 
@@ -2540,7 +2541,7 @@ class SetTagsTest(TestCase):
             headers=self.headers(self.manager),
             data=self.data(self.tags),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.report_finding.refresh_from_db()
         self.assertEqual(set(self.report_finding.tags.names()), self.tags, response.content)
 
@@ -2551,7 +2552,7 @@ class SetTagsTest(TestCase):
             headers=self.headers(self.user),
             data=self.data(self.tags),
         )
-        self.assertEquals(response.status_code, 403, response.content)
+        self.assertEquals(response.status_code, HTTPStatus.FORBIDDEN, response.content)
         self.report_finding.refresh_from_db()
         self.assertEqual(set(self.report_finding.tags.names()), set())
 
@@ -2562,7 +2563,7 @@ class SetTagsTest(TestCase):
             headers=self.headers(None),
             data=self.data(self.tags, "admin"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.report_finding.refresh_from_db()
         self.assertEqual(set(self.report_finding.tags.names()), self.tags)
 
@@ -2608,7 +2609,7 @@ class ObjectsByTagTests(TestCase):
             headers=self.headers(None),
             data=self.data("severity:high", hasura_role="public"),
         )
-        self.assertEquals(response.status_code, 400)
+        self.assertEquals(response.status_code, HTTPStatus.BAD_REQUEST)
 
     def test_get_user_no_results(self):
         response = self.client.post(
@@ -2617,7 +2618,7 @@ class ObjectsByTagTests(TestCase):
             headers=self.headers(self.user),
             data=self.data("severity:high"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(response.content, [])
 
     def test_get_user_with_access_results(self):
@@ -2627,7 +2628,7 @@ class ObjectsByTagTests(TestCase):
             headers=self.headers(self.user_with_access),
             data=self.data("severity:high"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(response.content, [
             {"id": self.report_finding.pk}
         ])
@@ -2639,7 +2640,7 @@ class ObjectsByTagTests(TestCase):
             headers=self.headers(self.manager),
             data=self.data("severity:high"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(response.content, [
             {"id": self.report_finding.pk}
         ])
@@ -2651,7 +2652,7 @@ class ObjectsByTagTests(TestCase):
             headers=self.headers(self.manager),
             data=self.data("thistagdoesnotexist!"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(response.content, [])
 
     def test_get_admin_results(self):
@@ -2661,7 +2662,7 @@ class ObjectsByTagTests(TestCase):
             headers=self.headers(None),
             data=self.data("severity:high", hasura_role="admin"),
         )
-        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.status_code, HTTPStatus.OK)
         self.assertJSONEqual(response.content, [
             {"id": self.report_finding.pk}
         ])
