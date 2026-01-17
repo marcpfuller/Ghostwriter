@@ -1,0 +1,112 @@
+Performance Metrics Summary Report
+Generated: 2026-01-17T01:10:40.098510
+Total Runs: 10
+================================================================================
+
+API
+--------------------------------------------------------------------------------
+
+  api_response_time ✓ PASS
+    Mean:   0.024591 
+    Median: 0.004867 
+    StdDev: 0.061988 
+    P95:    0.201010 
+    P99:    0.201010 
+
+
+OPTIMIZATION
+--------------------------------------------------------------------------------
+
+  _optimized_time ✓ PASS
+    Mean:   0.025308 
+    Median: 0.025144 
+    StdDev: 0.000545 
+    P95:    0.026735 
+    P99:    0.026735 
+
+  _full_time ✓ PASS
+    Mean:   0.075823 
+    Median: 0.075675 
+    StdDev: 0.001025 
+    P95:    0.077888 
+    P99:    0.077888 
+
+  optimized_vs_full_speedup ✓ PASS
+    Mean:   2.996843 
+    Median: 3.005093 
+    StdDev: 0.055004 
+    P95:    3.093471 
+    P99:    3.093471 
+
+
+PROCESSING
+--------------------------------------------------------------------------------
+
+  short_text_memory ✓ PASS
+    Mean:   -0.097656 
+    Median: 0.000000 
+    StdDev: 0.311571 
+    P95:    0.007812 
+    P99:    0.007812 
+
+  short_text_time ✓ PASS
+    Mean:   0.088633 
+    Median: 0.087282 
+    StdDev: 0.002906 
+    P95:    0.095687 
+    P99:    0.095687 
+
+  medium_text_memory ✓ PASS
+    Mean:   0.110156 
+    Median: 0.000000 
+    StdDev: 0.348345 
+    P95:    1.101562 
+    P99:    1.101562 
+
+  medium_text_time ✓ PASS
+    Mean:   0.128524 
+    Median: 0.128024 
+    StdDev: 0.001928 
+    P95:    0.132429 
+    P99:    0.132429 
+
+  long_text_memory ✓ PASS
+    Mean:   0.412891 
+    Median: 0.000000 
+    StdDev: 1.305675 
+    P95:    4.128906 
+    P99:    4.128906 
+
+  long_text_time ✓ PASS
+    Mean:   0.480584 
+    Median: 0.478624 
+    StdDev: 0.005292 
+    P95:    0.489724 
+    P99:    0.489724 
+
+  memory_overhead ✓ PASS
+    Mean:   271.158594 
+    Median: 271.355469 
+    StdDev: 0.415049 
+    P95:    271.355469 
+    P99:    271.355469 
+
+
+STARTUP
+--------------------------------------------------------------------------------
+
+  model_load_time ✓ PASS
+    Mean:   0.000003 
+    Median: 0.000003 
+    StdDev: 0.000000 
+    P95:    0.000004 
+    P99:    0.000004 
+
+  singleton_access_time ✓ PASS
+    Mean:   0.000000 
+    Median: 0.000000 
+    StdDev: 0.000000 
+    P95:    0.000000 
+    P99:    0.000000 
+
+

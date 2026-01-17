@@ -1,0 +1,108 @@
+{
+  "startup": {
+    "model_load_time": {
+      "target": 2.0,
+      "warning": 3.0,
+      "unit": "seconds",
+      "description": "Time to load spaCy model on first use"
+    },
+    "singleton_access_time": {
+      "target": 0.001,
+      "warning": 0.01,
+      "unit": "seconds",
+      "description": "Time to retrieve singleton instance after initial load"
+    }
+  },
+  "processing": {
+    "short_text_time": {
+      "target": 0.1,
+      "warning": 0.2,
+      "unit": "seconds",
+      "description": "Time to process ~100 words"
+    },
+    "short_text_memory": {
+      "target": 5.0,
+      "warning": 10.0,
+      "unit": "MB",
+      "description": "Memory used processing ~100 words"
+    },
+    "medium_text_time": {
+      "target": 0.5,
+      "warning": 1.0,
+      "unit": "seconds",
+      "description": "Time to process ~1000 words"
+    },
+    "medium_text_memory": {
+      "target": 10.0,
+      "warning": 20.0,
+      "unit": "MB",
+      "description": "Memory used processing ~1000 words"
+    },
+    "long_text_time": {
+      "target": 2.0,
+      "warning": 4.0,
+      "unit": "seconds",
+      "description": "Time to process ~5000 words"
+    },
+    "long_text_memory": {
+      "target": 30.0,
+      "warning": 50.0,
+      "unit": "MB",
+      "description": "Memory used processing ~5000 words"
+    },
+    "memory_overhead": {
+      "target": 100.0,
+      "warning": 200.0,
+      "unit": "MB",
+      "description": "Total memory footprint with detector loaded"
+    }
+  },
+  "api": {
+    "api_response_time": {
+      "target": 0.3,
+      "warning": 0.6,
+      "unit": "seconds",
+      "description": "End-to-end API response time for typical request"
+    },
+    "api_throughput": {
+      "target": 10.0,
+      "warning": 5.0,
+      "unit": "requests/second",
+      "description": "Number of requests processed per second"
+    }
+  },
+  "optimization": {
+    "optimized_vs_full_speedup": {
+      "target": 1.3,
+      "warning": 1.1,
+      "unit": "ratio",
+      "description": "Speed improvement from disabled pipeline components"
+    }
+  },
+  "load": {
+    "light_load_throughput": {
+      "target": 5.0,
+      "warning": 3.0,
+      "unit": "requests/second",
+      "description": "Throughput with 5 concurrent users"
+    },
+    "moderate_load_throughput": {
+      "target": 3.0,
+      "warning": 2.0,
+      "unit": "requests/second",
+      "description": "Throughput with 10 concurrent users"
+    },
+    "heavy_load_throughput": {
+      "target": 2.0,
+      "warning": 1.0,
+      "unit": "requests/second",
+      "description": "Throughput with 20 concurrent users"
+    },
+    "p95_response_under_load": {
+      "target": 1.0,
+      "warning": 2.0,
+      "unit": "seconds",
+      "description": "P95 response time under moderate load"
+    }
+  }
+}

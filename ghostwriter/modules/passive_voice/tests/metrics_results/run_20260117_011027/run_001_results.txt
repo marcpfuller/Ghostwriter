@@ -1,0 +1,29 @@
+Performance Metrics - Run 1
+Timestamp: 2026-01-17T01:10:40.094522
+======================================================================
+
+API
+----------------------------------------------------------------------
+  api_response_time: 0.201010 
+
+OPTIMIZATION
+----------------------------------------------------------------------
+  _optimized_time: 0.026735 
+  _full_time: 0.077888 
+  optimized_vs_full_speedup: 2.913342 
+
+PROCESSING
+----------------------------------------------------------------------
+  short_text_memory: 0.007812 
+  short_text_time: 0.089848 
+  medium_text_memory: 1.101562 
+  medium_text_time: 0.128254 
+  long_text_memory: 4.128906 
+  long_text_time: 0.489724 
+  memory_overhead: 271.355469 
+
+STARTUP
+----------------------------------------------------------------------
+  model_load_time: 0.000003 
+  singleton_access_time: 0.000000 
+

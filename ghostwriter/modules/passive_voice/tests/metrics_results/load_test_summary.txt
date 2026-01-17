@@ -1,0 +1,97 @@
+======================================================================
+LOAD TEST RESULTS SUMMARY
+Generated: 2026-01-17 01:25:00
+======================================================================
+
+HEAVY LOAD TEST
+Test: Heavy Load (20 users, 5 requests)
+----------------------------------------------------------------------
+Total Requests: 100
+Successful: 100
+Failed: 0
+Throughput: 15.58 req/sec
+Response Times:
+Mean:   1.246s
+Median: 1.316s
+Min:    0.448s
+Max:    1.516s
+P95:    1.451s
+P99:    1.516s
+Memory Delta: 4.89 MB
+Status: ✅ PASS
+
+LIGHT LOAD TEST
+Test: Light Load (5 users, 10 requests)
+----------------------------------------------------------------------
+Total Requests: 50
+Successful: 50
+Failed: 0
+Throughput: 54.64 req/sec
+Response Times:
+Mean:   0.087s
+Median: 0.090s
+Min:    0.019s
+Max:    0.123s
+P95:    0.114s
+P99:    0.123s
+Memory Delta: 2.00 MB
+Status: ✅ PASS
+
+MODERATE LOAD TEST
+Test: Moderate Load (10 users, 10 requests)
+----------------------------------------------------------------------
+Total Requests: 100
+Successful: 100
+Failed: 0
+Throughput: 12.57 req/sec
+Response Times:
+Mean:   0.790s
+Median: 0.801s
+Min:    0.587s
+Max:    0.880s
+P95:    0.853s
+P99:    0.880s
+Memory Delta: 2.45 MB
+Status: ✅ PASS
+
+SPIKE LOAD TEST
+Test: Spike Load (5→15 users)
+----------------------------------------------------------------------
+Total Requests: 300
+Successful: 300
+Failed: 0
+Throughput: 21.52 req/sec
+Response Times:
+Mean:   0.689s
+Median: 0.707s
+Min:    0.254s
+Max:    0.812s
+P95:    0.780s
+P99:    0.806s
+Memory Delta: 0.80 MB
+Performance degradation: 19.53x
+Baseline Median: 0.036s
+Spike Median: 0.707s
+Spike P95: 0.780s
+Status: ✅ PASS
+
+SUSTAINED LOAD TEST
+Test: Sustained Load (10 users, 20 requests)
+----------------------------------------------------------------------
+Total Requests: 200
+Successful: 200
+Failed: 0
+Throughput: 28.53 req/sec
+Response Times:
+Mean:   0.347s
+Median: 0.356s
+Min:    0.071s
+Max:    0.417s
+P95:    0.403s
+P99:    0.415s
+Memory Delta: 2.01 MB
+Status: ✅ PASS
+
+======================================================================
+OVERALL: 5/5 tests passed (100.0%)
+======================================================================
