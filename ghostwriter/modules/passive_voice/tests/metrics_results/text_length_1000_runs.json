@@ -1,0 +1,150 @@
+{
+  "text_length": 1000,
+  "num_runs": 10,
+  "successful_runs": 10,
+  "failed_runs": 0,
+  "duration_stats": {
+    "mean_seconds": 0.0062548846937716005,
+    "median_seconds": 0.006171705550514162,
+    "min_seconds": 0.006089288974180818,
+    "max_seconds": 0.007007454987615347,
+    "stdev_seconds": 0.00026851922634359246,
+    "mean_ms": 6.254884693771601,
+    "median_ms": 6.171705550514162
+  },
+  "memory_stats": {
+    "mean_delta_mb": 0.033984375,
+    "median_delta_mb": 0.0,
+    "min_delta_mb": 0.0,
+    "max_delta_mb": 0.33984375
+  },
+  "throughput_stats": {
+    "mean_chars_per_sec": 160116.04794904645,
+    "median_chars_per_sec": 162030.42082094832,
+    "min_chars_per_sec": 142705.16211197275,
+    "max_chars_per_sec": 164222.78598373276
+  },
+  "passive_sentences_found": 12,
+  "individual_runs": [
+    {
+      "run_number": 1,
+      "text_length": 1000,
+      "duration_seconds": 0.007007454987615347,
+      "duration_ms": 7.007454987615347,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.33984375,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 142705.16211197275
+    },
+    {
+      "run_number": 2,
+      "text_length": 1000,
+      "duration_seconds": 0.00614533107727766,
+      "duration_ms": 6.14533107727766,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 162725.16279838793
+    },
+    {
+      "run_number": 3,
+      "text_length": 1000,
+      "duration_seconds": 0.006140496931038797,
+      "duration_ms": 6.140496931038797,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 162853.2692436064
+    },
+    {
+      "run_number": 4,
+      "text_length": 1000,
+      "duration_seconds": 0.006089288974180818,
+      "duration_ms": 6.089288974180818,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 164222.78598373276
+    },
+    {
+      "run_number": 5,
+      "text_length": 1000,
+      "duration_seconds": 0.006248038960620761,
+      "duration_ms": 6.248038960620761,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 160050.21836493912
+    },
+    {
+      "run_number": 6,
+      "text_length": 1000,
+      "duration_seconds": 0.006184122059494257,
+      "duration_ms": 6.184122059494257,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 161704.44088579016
+    },
+    {
+      "run_number": 7,
+      "text_length": 1000,
+      "duration_seconds": 0.006159289041534066,
+      "duration_ms": 6.159289041534066,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 162356.4007561065
+    },
+    {
+      "run_number": 8,
+      "text_length": 1000,
+      "duration_seconds": 0.006142247002571821,
+      "duration_ms": 6.142247002571821,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 162806.86849312473
+    },
+    {
+      "run_number": 9,
+      "text_length": 1000,
+      "duration_seconds": 0.006206455989740789,
+      "duration_ms": 6.206455989740789,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 161122.5474977975
+    },
+    {
+      "run_number": 10,
+      "text_length": 1000,
+      "duration_seconds": 0.006226121913641691,
+      "duration_ms": 6.226121913641691,
+      "passive_sentences_found": 12,
+      "memory_delta_mb": 0.0,
+      "memory_end_mb": 250.73046875,
+      "success": true,
+      "error": null,
+      "chars_per_second": 160613.62335500668
+    }
+  ]
+}
